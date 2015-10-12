@@ -4,11 +4,11 @@
  * @version:1.0.0
  * @name:hichao ui for web app
  */
- 
- 
+
+
 /*
-* BASE
-*/
+ * BASE
+ */
 (function () {
     var win = this,
         doc = win.document,
@@ -19,53 +19,61 @@
     var arr = [],
         stringPrototype = String.prototype,
         slice = arr.slice;
-        
+
     //声明
     var H = function (selector, context) {
         return H.init.apply(this, arguments);
     };
-    
+
     //trim
     stringPrototype.trim = function () {
         return this.replace(/^(\s|\u00A0)+|(\s|\u00A0)+$/g, "");
     };
-    
+
     // is object
     function isObject(t) {
         return t + "" == "[object Object]";
     }
+
     // is null
     function isNull(t) {
         return t === undefined || t === null;
     }
+
     // is string
     function isString(t) {
         return typeof t == 'string';
     }
+
     // is array
     function isArray(t) {
         return t instanceof Array;
     }
+
     // is function
     function isFunction(t) {
         return t instanceof Function;
     }
+
     // is window
     function isWindow(t) {
         return t != null && t === t.window;
     }
+
     // is number
     function isNumber(t) {
         return typeof t == 'number';
     }
+
     // to json
     function parseJSON(t) {
         return (isNull(t) && t != '') ? "" : JSON.parse(t);
     }
+
     // array or hui array
     function huiArray(t) {
         var length = !isString(t) ? "length" in t && t.length : null;
-        
+
         // window or document
         if (isWindow(t)) {
             return false;
@@ -79,13 +87,16 @@
             return isArray(t) || length === 0 || typeof length === "number" && length > 0 && (length - 1) in t;
         }
     }
+
     // is dom
     function isDom(t) {
         return t && t.nodeType == 1;
     }
+
     function execObject(t) {
         return isFunction(t) ? t() : t;
     }
+
     //extend
     H.extend = function () {
         var args = arguments,
@@ -106,7 +117,7 @@
         });
         return ret;
     };
-    
+
     // each
     function each(obj, callback) {
         var i = 0;
@@ -121,14 +132,16 @@
         }
         return obj;
     }
-    
+
     //load resource
     function loadResource(type, url, success, error) {
         url = url || loc.pathname;
         var isCss = type == 'css',
             isScript = type == 'js',
             tagName = isCss ? 'link' : (isScript ? 'script' : null);
-        if (isNull(tagName)) { return; }
+        if (isNull(tagName)) {
+            return;
+        }
         var node = doc.createElement(tagName),
             hnode = H(node);
         isCss ? hnode.attr('rel', 'stylesheet') : isScript && hnode.attr('script', 'type/javascript');
@@ -145,6 +158,7 @@
         H('head').append(node);
         return node;
     }
+
     win.$ = win.HUI = H;
     H.version = '1.0.0';
     H.extend({
@@ -229,6 +243,19 @@
         isRetinal: function () {
             return (win.devicePixelRatio || 2) >= 1.5;
         },
+        //cssPrefix
+        cssPrefix : function(style) {
+            var ret = {};
+            if (isString(style)) {
+                ret = (H.isWK() ? "-webkit-" : H.isIE() ? "-ms-" : H.isFF() ? "-moz-" : H.isOpera() ? "-o-" : "") + style;
+            } else {
+                each(H.extend({}, style), function(key, val) {
+                    ret[H.cssPrefix(key)] = val;
+                    ret[key] = val;
+                })
+            }
+            return ret
+        },
         // load js
         getScript: function (url, success, error) {
             return loadResource("js", url, success, error);
@@ -241,8 +268,8 @@
 })();
 
 /* 
-*  DOM
-*/
+ *  DOM
+ */
 (function (H) {
     var win = H.global,
         doc = win.document,
@@ -256,6 +283,7 @@
         inArray = H.inArray,
         isDom = H.isDom,
         isFunction = H.isFunction,
+        pxFix = ['width', 'height', 'top', 'left', 'right', 'bottom'],
         nodeRegExp = /^\s*(<.+>.*<\/.+>)+|(<.+\/\s*>)+\s*$/;
 
     function init(selector, context) {
@@ -302,6 +330,7 @@
     function isHuiArray(t) {
         return t instanceof query;
     }
+
     // find
     function find(selector, context) {
         var result = [];
@@ -317,6 +346,7 @@
         }
         return result;
     }
+
     //arrayConcat
     function arrayConcat(sarray, tarray) {
         if (isArray(tarray)) {
@@ -328,15 +358,18 @@
         }
         return sarray;
     }
-    // hui array value 
+
+    // hui array value
     function huiValue(t) {
         t = execObject(t);
         return isString(t) && nodeRegExp.test(t.replace(/\n+/g, "")) ? H(t) : t;
     }
+
     // createTextNode
     function createTextNode(t) {
         return doc.createTextNode(t);
     }
+
     // clone
     function clone(t, deep) {
         if (isDom(t)) {
@@ -348,7 +381,8 @@
         });
         return H(r);
     }
-    // append 
+
+    // append
     function append(node, child) {
 
         child = huiValue(child);
@@ -363,7 +397,8 @@
             }) : node.appendChild(isDom(child) ? child : createTextNode(child));
         }
     }
-    // prepend 
+
+    // prepend
     function prepend(node, child) {
         child = huiValue(child);
         if (huiArray(node)) {
@@ -377,11 +412,25 @@
             }) : node.insertBefore(isDom(child) ? child : createTextNode(child), node.firstChild);
         }
     }
-    
+
     // hasClass
     function hasClass(d, t) {
         return isDom(d) && new RegExp('(\\s|^)' + t + '(\\s|$)').test(d.className);
     }
+
+    //fix px
+    function fixPx(t, v) {
+        for (var i in pxFix) {
+            if (t.indexOf(pxFix[i]) >= 0) {
+                if (!/[^\d\.-]/.test(v)) {
+                    v += "px"
+                }
+                break
+            }
+        }
+        return v
+    }
+
     //css
     function css(d, t, v) {
         //value is null
@@ -397,7 +446,7 @@
             // t is object
             if (isObject(t)) {
                 each(t, function (i, o) {
-                    r += i + ':' + o + ';';
+                    r += i + ':' + fixPx(i, o) + ';';
                 });
             }
             each(d, function (i, o) {
@@ -406,7 +455,8 @@
             return d;
         }
     }
-    // attr 
+
+    // attr
     function attr(d, t, v) {
         if (isNull(v) && isString(t)) {
             var node = d[0];
@@ -428,13 +478,15 @@
             return d;
         }
     }
-    //matchesSelector 
+
+    //matchesSelector
     function matchesSelector(d, t) {
         if (d) {
             d._matchesSelector = d.matchesSelector || d.msMatchesSelector || d.mozMatchesSelector || d.webkitMatchesSelector;
             return d._matchesSelector && d._matchesSelector(t);
         }
     }
+
     H.isHuiArray = isHuiArray;
     H.init = init;
     H.fn = query.prototype;
@@ -581,6 +633,57 @@
             css(this, 'display', 'node');
             return this;
         },
+        /**
+         *
+         * @param style
+         * @param time
+         * @param easing  可以的值,默认 ease-in-out
+         linear	规定以相同速度开始至结束的过渡效果（等于 cubic-bezier(0,0,1,1)）。
+         ease	规定慢速开始，然后变快，然后慢速结束的过渡效果（cubic-bezier(0.25,0.1,0.25,1)）。
+         ease-in	规定以慢速开始的过渡效果（等于 cubic-bezier(0.42,0,1,1)）。
+         ease-out	规定以慢速结束的过渡效果（等于 cubic-bezier(0,0,0.58,1)）。
+         ease-in-out	规定以慢速开始和结束的过渡效果（等于 cubic-bezier(0.42,0,0.58,1)）。
+         cubic-bezier(n,n,n,n)	在 cubic-bezier 函数中定义自己的值。可能的值是 0 至 1 之间的数值。
+
+         * @param callback
+         * @returns {*}
+         */
+        animate: function(style, time, easing, callback){
+            var me = this;
+            if(isFunction(easing)){
+                callback = easing;
+                easing = " ";
+            }
+            var initStyle = {transition: 0}, startStype = H.extend({}, initStyle);
+            each(style, function(key, val){
+                startStype[key] = parseFloat(css(me, key))||0;
+            });
+            css(me, startStype);
+            //H.delay(function(){
+            setTimeout(function(){
+                var isNotEnd = true;
+                style.transition = (easing||" ease-in-out ") +" " + (time || 600) + "ms";
+                css(me, H.cssPrefix(style));
+                function transitionEnd(e) {
+                    if(isNotEnd){
+                        css(me, initStyle);
+                        callback && callback(e);
+                        isNotEnd = false;
+                    }
+                }
+                me.one('webkitTransitionEnd',transitionEnd);
+                me.one('msTransitionEnd',transitionEnd);
+                me.one('oTransitionEnd',transitionEnd);
+                me.one('transitionend',transitionEnd);
+                /*me.one({
+                 webkitTransitionEnd: transitionEnd,
+                 msTransitionEnd: transitionEnd,
+                 oTransitionEnd: transitionEnd,
+                 transitionend: transitionEnd
+                 });*/
+            }, 10);
+            return me;
+        },
         prev: function () {
             var r = [];
             each(this, function (i, o) {
@@ -684,15 +787,23 @@
     function setLoad(node, fn) {
         node.onreadystatechange = node.onload = node.onDOMContentLoaded = fn;
     }
+
     function _delete(object, name) {
-        try { delete object[name]; } catch (e) { object[name] = null; }
+        try {
+            delete object[name];
+        } catch (e) {
+            object[name] = null;
+        }
     }
+
     function createEvent(type) {
         return doc.createEvent ? doc.createEvent(type) : doc.createEventObject(type);
     }
+
     function isSE() {
         return !isNull(doc.addEventListener);
     }
+
     function trigger(d, t) {
         var ev;
         if (isSE()) {
@@ -736,8 +847,11 @@
                 dom.attachEvent('on' + type, listeners['handler']);
         }
     }
+
     function eventRemove(dom, type, fn) {
-        if (!dom.listeners) { return; }
+        if (!dom.listeners) {
+            return;
+        }
         var listeners = dom.listeners && dom.listeners[type];
         // all delete
         if (isNull(type) && isNull(fn)) {
@@ -759,6 +873,7 @@
             }
         }
     }
+
     function _remove(dom, type) {
         if (isNull(type)) {
             if (dom.listeners) {
@@ -781,12 +896,14 @@
             }
         }
     }
+
     function isEmptyObject(obj) {
         for (var a in obj) {
             return false;
         }
         return true;
     }
+
     function fixEvent(e) {
         e.preventDefault || (e.preventDefault = function () {
             this.returnValue = !1;
@@ -803,6 +920,7 @@
 
         return e;
     }
+
     H.ready = fn.ready = function (fn, context) {
         var node = context || this[0] || doc,
             state;
@@ -819,6 +937,7 @@
                 _delete(node, "_handles");
             }
         }
+
         if (readyRE.test(node.readyState)) {
             setTimeout(function () {
                 fn.call(node, H);
@@ -832,7 +951,9 @@
     };
     fn.extend({
         on: function (type, selector, data, fn) {
-            if (!type) { return; }
+            if (!type) {
+                return;
+            }
             if (data == null && fn == null) {
                 // ( types, fn )
                 fn = selector;
@@ -849,7 +970,9 @@
                     selector = undefined;
                 }
             }
-            if (!fn) { return this; }
+            if (!fn) {
+                return this;
+            }
             each(this, function (i, o) {
                 eventAdd(o, type, fn, data, selector);
             });
@@ -861,6 +984,15 @@
             });
             return this;
         },
+        one: function (type, fn) {
+            each(this, function (i, o) {
+                eventAdd(o, type, function () {
+                    fn();
+                    eventRemove(o, type);
+                })
+            })
+            return this;
+        },
         trigger: function (type) {
             each(this, function (i, o) {
                 trigger(o, type);
@@ -868,11 +1000,18 @@
             return this;
         }
     })
+
+    each(['click', 'change', 'blur', 'focus', 'dbclick', 'keydown', 'keypress', 'keyup', 'load', 'mousedown', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'resize', 'scroll', 'submit', 'unload'], function (i, m) {
+        fn[m] = function (callback) {
+            return this.on(m, callback)
+        };
+    })
+
 })(HUI);
 
 /*
-* ajax
-*/
+ * ajax
+ */
 (function (H) {
     var win = H.global,
         loc = win.location,
@@ -889,6 +1028,7 @@
     function createXhr() {
         return win.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
     }
+
     // ajax
     function ajax(config) {
         config = H.extend(ajaxConfig, config);
@@ -942,30 +1082,34 @@
 })(HUI);
 
 /*
-* location
-*/
+ * location
+ */
 (function (H) {
     var win = H.global,
         doc = win.document,
         isNull = H.isNull,
         isDom = H.isDom;
-        
+
     // 计算元素的X(水平，左)位置
     function pageX(el) {
         return el.offsetParent ? el.offsetLeft + pageX(el.offsetParent) : el.offsetLeft;
     }
+
     // 计算元素的Y(垂直，顶)位置
     function pageY(el) {
         return el.offsetParent ? el.offsetTop + pageY(el.offsetParent) : el.offsetTop;
     }
+
     // 查找元素在其父元素中的水平位置
     function parentX(el) {
         return el.parentNode == el.offsetParent ? el.offsetLeft : pageX(el) - pageX(el.parentNode);
     }
+
     // 查找元素在其父元素中的垂直位置
     function parentY(el) {
         return el.parentNode == el.offsetParent ? el.offsetTop : pageY(el) - pageY(el.parentNode);
     }
+
     H.fn.extend({
         width: function () {
             var dom = this[0];
@@ -1012,14 +1156,15 @@
                 win.scrollBy(t - x, 0);
                 return this;
             }
-        },
+        }
     });
 })(HUI);
+
 
 /*
  * touch
  * */
-(function(H){
+(function (H) {
     var touch = {}, touchTimeout, longTapDelay = 750,
         supportTouch = 'ontouchend' in document;
 
@@ -1039,13 +1184,13 @@
         }
     }
 
-    H(document).ready(function(){
+    H(document).ready(function () {
         var now, delta,
             touchStartEvent = supportTouch ? 'touchstart' : 'mousedown',
-            touchMoveEvent  = supportTouch ? 'touchmove'  : 'mousemove',
-            touchEndEvent   = supportTouch ? 'touchend'   : 'mouseup';
+            touchMoveEvent = supportTouch ? 'touchmove' : 'mousemove',
+            touchEndEvent = supportTouch ? 'touchend' : 'mouseup';
 
-        document.body.addEventListener(touchStartEvent, function(e){
+        document.body.addEventListener(touchStartEvent, function (e) {
             now = Date.now();
             delta = now - (touch.last || now);
             touch.el = $(parentIfText(supportTouch ? e.touches[0].target : e.target));
@@ -1057,7 +1202,7 @@
             window.setTimeout(longTap, longTapDelay);
         }, false);
 
-        document.body.addEventListener(touchMoveEvent, function(e){
+        document.body.addEventListener(touchMoveEvent, function (e) {
             touch.x2 = supportTouch ? e.touches[0].pageX : e.pageX;
             touch.y2 = supportTouch ? e.touches[0].pageY : e.pageY;
             if (Math.abs(touch.x1 - touch.x2) > 10) {
@@ -1065,7 +1210,7 @@
             }
         }, false);
 
-        document.body.addEventListener(touchEndEvent, function(e){
+        document.body.addEventListener(touchEndEvent, function (e) {
             if (touch.isDoubleTap) {
                 touch.el.trigger('doubleTap');
                 touch = {};
@@ -1074,7 +1219,7 @@
                 touch.el.trigger('swipe' + (swipeDirection(touch.x1, touch.x2, touch.y1, touch.y2)));
                 touch = {};
             } else if ('last' in touch) {
-                touchTimeout = window.setTimeout(function(){
+                touchTimeout = window.setTimeout(function () {
                     touchTimeout = null;
                     touch.el.trigger('tap');
                     touch = {};
@@ -1082,14 +1227,14 @@
             }
         }, false);
 
-        document.body.addEventListener('touchcancel', function(){
+        document.body.addEventListener('touchcancel', function () {
             touch = {};
         }, false);
     });
 
-    ['swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown', 'doubletap', 'tap', 'longtap'].forEach(function(m){
-        H.fn[m] = function(callback){
-            return this.on(m,callback)
+    ['swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown', 'doubletap', 'tap', 'longtap'].forEach(function (m) {
+        H.fn[m] = function (callback) {
+            return this.on(m, callback)
         };
     });
 })(HUI);
