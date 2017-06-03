@@ -318,3 +318,15 @@ function cloneObj(obj) {
     }
     return o;
 }
+
+/*new*/
+new Animal("cat") = {
+
+    var obj = {};
+
+    obj.__proto__ = Animal.prototype;
+
+    var result = Animal.call(obj,"cat");
+
+    return typeof result === 'object'? result : obj;
+}
